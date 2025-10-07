@@ -325,6 +325,48 @@ class AKShareProvider:
 
         return clean_symbol
 
+    def get_current_price(self, symbol: str) -> float:
+        """
+        获取股票当前价格
+        
+        Args:
+            symbol: 股票代码 (6位数字)
+            
+        Returns:
+            float: 股票当前价格，如果获取失败则返回0.0
+        """
+        if not self.connected:
+            logger.error(f"❌ AKShare未连接，无法获取{symbol}当前价格")
+            return 0.0
+        
+        try:
+            logger.info(f"🔍 开始获取{symbol}的当前价格")
+            
+            # 转换股票代码格式
+            if len(symbol) == 6:
+                symbol = symbol
+            else:
+                symbol = symbol.replace('.SZ', '').replace('.SS', '')
+            
+            # 获取实时行情数据
+            stock_zh_a_spot_df = self.ak.stock_zh_a_spot()
+            
+            # 查找对应的股票（考虑股票代码可能包含 bj、sz、sh 前缀）
+            stock_info = stock_zh_a_spot_df[stock_zh_a_spot_df['代码'].str.endswith(symbol)]
+            
+            if not stock_info.empty:
+                # 获取当前价格
+                current_price = float(stock_info.iloc[0]['最新价'])
+                logger.info(f"✅ 成功获取{symbol}当前价格: {current_price}")
+                return current_price
+            else:
+                logger.warning(f"⚠️ 未找到{symbol}的实时行情数据")
+                return 0.0
+                
+        except Exception as e:
+            logger.error(f"❌ AKShare获取{symbol}当前价格失败: {e}")
+            return 0.0
+    
     def get_financial_data(self, symbol: str) -> Dict[str, Any]:
         """
         获取股票财务数据

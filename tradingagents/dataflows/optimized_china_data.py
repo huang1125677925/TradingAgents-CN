@@ -458,11 +458,23 @@ class OptimizedChinaDataProvider:
     def _estimate_financial_metrics(self, symbol: str, current_price: str) -> dict:
         """获取真实财务指标（优先使用Tushare真实数据，失败时使用估算）"""
 
-        # 提取价格数值
+        # 直接从AKShare获取实时价格
         try:
-            price_value = float(current_price.replace('¥', '').replace(',', ''))
-        except:
-            price_value = 10.0  # 默认值
+            from .akshare_utils import get_akshare_provider
+            akshare_provider = get_akshare_provider()
+            if akshare_provider.connected:
+                price_value = akshare_provider.get_current_price(symbol)
+                if price_value > 0:
+                    logger.debug(f"✅ 使用AKShare获取实时股价: {symbol} = {price_value}")
+                else:
+                    price_value = 0.0  # 使用0表示无效价格
+                    logger.warning(f"⚠️ 无法从AKShare获取{symbol}实时股价，使用0.0作为标记")
+            else:
+                price_value = 0.0
+                logger.warning(f"⚠️ AKShare未连接，无法获取{symbol}实时股价，使用0.0作为标记")
+        except Exception as e:
+            price_value = 0.0
+            logger.warning(f"⚠️ 获取{symbol}实时股价失败: {e}，使用0.0作为标记")
 
         # 尝试获取真实财务数据
         real_metrics = self._get_real_financial_metrics(symbol, price_value)
@@ -593,13 +605,16 @@ class OptimizedChinaDataProvider:
             if eps_value is not None and str(eps_value) != 'nan' and eps_value != '--':
                 try:
                     eps_val = float(eps_value)
-                    if eps_val > 0:
+                    if eps_val > 0 and price_value > 0:
                         # 计算PE = 股价 / 每股收益
                         pe_val = price_value / eps_val
                         metrics["pe"] = f"{pe_val:.1f}倍"
                         logger.debug(f"✅ 计算PE: 股价{price_value} / EPS{eps_val} = {metrics['pe']}")
-                    else:
+                    elif eps_val <= 0:
                         metrics["pe"] = "N/A（亏损）"
+                    else:
+                        metrics["pe"] = "N/A（价格数据无效）"
+                        logger.warning(f"⚠️ 无法计算PE: 股价{price_value}无效")
                 except (ValueError, TypeError):
                     metrics["pe"] = "N/A"
             else:
@@ -610,13 +625,16 @@ class OptimizedChinaDataProvider:
             if bps_value is not None and str(bps_value) != 'nan' and bps_value != '--':
                 try:
                     bps_val = float(bps_value)
-                    if bps_val > 0:
+                    if bps_val > 0 and price_value > 0:
                         # 计算PB = 股价 / 每股净资产
                         pb_val = price_value / bps_val
                         metrics["pb"] = f"{pb_val:.2f}倍"
                         logger.debug(f"✅ 计算PB: 股价{price_value} / BPS{bps_val} = {metrics['pb']}")
+                    elif bps_val <= 0:
+                        metrics["pb"] = "N/A（净资产为负）"
                     else:
-                        metrics["pb"] = "N/A"
+                        metrics["pb"] = "N/A（价格数据无效）"
+                        logger.warning(f"⚠️ 无法计算PB: 股价{price_value}无效")
                 except (ValueError, TypeError):
                     metrics["pb"] = "N/A"
             else:

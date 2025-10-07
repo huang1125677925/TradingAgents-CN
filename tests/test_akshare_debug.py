@@ -12,6 +12,7 @@ logging.basicConfig(level=logging.DEBUG, format='%(asctime)s | %(name)-20s | %(l
 
 # 添加项目路径
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from tradingagents.dataflows.akshare_utils import AKShareProvider
 
@@ -35,6 +36,10 @@ def test_akshare_financial_data():
     symbol = "600519"
     
     try:
+
+        current_price = provider.get_current_price(symbol)
+        print(f"   当前价格: {current_price}")
+        
         financial_data = provider.get_financial_data(symbol)
         print(f"   返回结果类型: {type(financial_data)}")
         print(f"   返回结果: {financial_data}")

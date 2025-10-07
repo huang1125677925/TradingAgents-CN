@@ -456,10 +456,15 @@ class ReportExporter:
         md_content = self.generate_markdown_report(results)
         logger.info(f"✅ Markdown内容生成完成，长度: {len(md_content)} 字符")
 
-        # 简化的PDF引擎列表，优先使用最可能成功的
+        # 扩展的PDF引擎列表，优先使用最可能成功的
         pdf_engines = [
             ('wkhtmltopdf', 'HTML转PDF引擎，推荐安装'),
             ('weasyprint', '现代HTML转PDF引擎'),
+            ('xelatex', 'XeLaTeX引擎，支持Unicode'),
+            ('pdflatex', 'PDFLaTeX引擎，传统LaTeX引擎'),
+            ('lualatex', 'LuaLaTeX引擎，现代LaTeX引擎'),
+            ('context', 'ConTeXt引擎'),
+            ('prince', 'Prince XML引擎'),
             (None, '使用pandoc默认引擎')  # 不指定引擎，让pandoc自己选择
         ]
 
@@ -511,9 +516,18 @@ class ReportExporter:
                     raise Exception("PDF文件生成失败或为空")
 
             except Exception as e:
-                last_error = str(e)
-                logger.error(f"PDF引擎 {engine or '默认'} 失败: {e}")
-
+                error_message = str(e)
+                last_error = error_message
+                logger.error(f"PDF引擎 {engine or '默认'} 失败: {error_message}")
+                
+                # 记录更详细的错误信息，帮助用户诊断
+                if "pdflatex not found" in error_message:
+                    logger.error("❌ 未找到pdflatex引擎，需要安装LaTeX")
+                elif "wkhtmltopdf not found" in error_message:
+                    logger.error("❌ 未找到wkhtmltopdf引擎，需要安装wkhtmltopdf")
+                elif "weasyprint" in error_message:
+                    logger.error("❌ WeasyPrint引擎错误，可能需要安装或更新")
+                
                 # 清理可能存在的临时文件
                 try:
                     if 'output_file' in locals() and os.path.exists(output_file):
@@ -525,20 +539,25 @@ class ReportExporter:
 
         # 如果所有引擎都失败，提供详细的错误信息和解决方案
         error_msg = f"""PDF生成失败，最后错误: {last_error}
+        
+可能的解决方案: 
 
-可能的解决方案:
 1. 安装wkhtmltopdf (推荐):
    Windows: choco install wkhtmltopdf
    macOS: brew install wkhtmltopdf
    Linux: sudo apt-get install wkhtmltopdf
 
-2. 安装LaTeX:
+2. 安装LaTeX (如果错误提示pdflatex不可用):
    Windows: choco install miktex
    macOS: brew install mactex
-   Linux: sudo apt-get install texlive-full
+   Linux: sudo apt-get install texlive-xetex
 
-3. 使用Markdown或Word格式导出作为替代方案
+3. 安装WeasyPrint (替代方案):
+   pip install weasyprint
+
+4. 使用Markdown或Word格式导出作为替代方案
 """
+        logger.error(f"❌ 所有PDF引擎尝试失败，最后错误: {last_error}")
         raise Exception(error_msg)
     
     def export_report(self, results: Dict[str, Any], format_type: str) -> Optional[bytes]:

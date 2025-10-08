@@ -179,7 +179,7 @@ def render_sidebar():
         <div id="localStorage-reader" style="display: none;">
             <script>
             // 从localStorage读取设置并发送给Streamlit
-            const provider = loadFromLocalStorage('llm_provider', 'dashscope');
+            const provider = loadFromLocalStorage('llm_provider', 'deepseek');
             const category = loadFromLocalStorage('model_category', 'openai');
             const model = loadFromLocalStorage('llm_model', '');
 
@@ -217,17 +217,10 @@ def render_sidebar():
         # LLM提供商选择
         llm_provider = st.selectbox(
             "LLM提供商",
-            options=["dashscope", "deepseek", "google", "openai", "openrouter", "siliconflow", "custom_openai", "qianfan"],
-            index=["dashscope", "deepseek", "google", "openai", "openrouter", "siliconflow", "custom_openai", "qianfan"].index(st.session_state.llm_provider) if st.session_state.llm_provider in ["dashscope", "deepseek", "google", "openai", "openrouter", "siliconflow", "custom_openai", "qianfan"] else 0,
+            options=["deepseek"],
+            index=["deepseek"].index(st.session_state.llm_provider) if st.session_state.llm_provider in ["deepseek"] else 0,
             format_func=lambda x: {
-                "dashscope": "🇨🇳 阿里百炼",
                 "deepseek": "🚀 DeepSeek V3",
-                "google": "🌟 Google AI",
-                "openai": "🤖 OpenAI",
-                "openrouter": "🌐 OpenRouter",
-                "siliconflow": "🇨🇳 硅基流动",
-                "custom_openai": "🔧 自定义OpenAI端点",
-                "qianfan": "🧠 文心一言（千帆）"
             }[x],
             help="选择AI模型提供商",
             key="llm_provider_select"

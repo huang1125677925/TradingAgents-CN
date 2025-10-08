@@ -45,7 +45,7 @@ class ModelPersistence:
             query_params = st.query_params
             if 'provider' in query_params:
                 config = {
-                    'provider': query_params.get('provider', 'dashscope'),
+                    'provider': query_params.get('provider', 'deepseek'),
                     'category': query_params.get('category', 'openai'),
                     'model': query_params.get('model', '')
                 }

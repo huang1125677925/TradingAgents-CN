@@ -8,10 +8,10 @@ logger = get_logger('default')
 
 # Create a custom config
 config = DEFAULT_CONFIG.copy()
-config["llm_provider"] = "google"  # Use a different model
-config["backend_url"] = "https://generativelanguage.googleapis.com/v1"  # Use a different backend
-config["deep_think_llm"] = "gemini-2.0-flash"  # Use a different model
-config["quick_think_llm"] = "gemini-2.0-flash"  # Use a different model
+config["llm_provider"] = "deepseek"  # Use a different model
+config["deepseek_api_key"] = "sk-xxxxxx"  # Use a different backend
+config["deep_think_llm"] = "deepseek-chat"  # Use a different model
+config["quick_think_llm"] = "deepseek-chat"  # Use a different model
 config["max_debate_rounds"] = 1  # Increase debate rounds
 config["online_tools"] = True  # Increase debate rounds
 
@@ -19,7 +19,9 @@ config["online_tools"] = True  # Increase debate rounds
 ta = TradingAgentsGraph(debug=True, config=config)
 
 # forward propagate
-_, decision = ta.propagate("NVDA", "2024-05-10")
+final_state, decision = ta.propagate("000001", "2025-10-09")
+ta._log_state("2025-10-09", final_state)
+print(ta.log_states_dict["2025-10-09"])
 print(decision)
 
 # Memorize mistakes and reflect
